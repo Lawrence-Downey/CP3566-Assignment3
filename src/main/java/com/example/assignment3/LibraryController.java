@@ -1,10 +1,13 @@
 package com.example.assignment3;
 
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +74,63 @@ public class LibraryController {
             e.printStackTrace();
         }
         return null;
+    }
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/authors")
+    public List<Author> viewAuthors(){
+        String authQuery = "SELECT * FROM authors;";
+        List<Author> authList =  new ArrayList<>();
+        try(Connection conn = DBConnection.initDatabase();
+            Statement stmt = conn.createStatement();
+            ResultSet authSet = stmt.executeQuery(authQuery)) {
+            while (authSet.next()) {
+
+                Author author = new Author(authSet.getInt("authorID"),
+                        authSet.getString("firstName"),
+                        authSet.getString("lastName"));
+
+                String getAuthors = "SELECT * FROM titles t " +
+                        "INNER JOIN authorisbn a On " +
+                        "t.isbn = a.isbn INNER JOIN authors x on " +
+                        "a.authorID = x.authorID " +
+                        "WHERE x.authorID = ?;";
+                PreparedStatement ps = conn.prepareStatement(getAuthors);
+                ps.setInt(1, author.getAuthorID());
+                ResultSet rsB = ps.executeQuery();
+                while (rsB.next()) {
+                    Book book = new Book(rsB.getString("isbn"), rsB.getString("title"),
+                            rsB.getInt("editionNumber"), rsB.getString("copyright"));
+                    author.getBookList().add(book);
+                }
+                authList.add(author);
+            }
+            return authList;
+        }catch(SQLException | ClassNotFoundException e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("library/book/{id}")
+    public Book oneBook(@PathParam("id") String id) throws ClassNotFoundException {
+        String query = "SELECT * from titles " +
+                "WHERE isbn = ?";
+        Book book = null;
+        try (Connection conn = DBConnection.initDatabase()) {
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                book = new Book(rs.getString("isbn"), rs.getString("title"),
+                        rs.getInt("editionNumber"), rs.getString("copyright"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return book;
     }
 }

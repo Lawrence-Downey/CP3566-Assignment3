@@ -6,16 +6,17 @@ import java.util.Objects;
 
 public class DBConnection {
 
-    static final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";
+
     static private String DB_URL = "jdbc:mariadb://localhost:3300/books";
     static private String USER = "root";
     static private String PASS = "ernie6660";
 
     public static Connection initDatabase() throws ClassNotFoundException, SQLException {
 
-        Class.forName(JDBC_DRIVER);
+        Driver d=new org.mariadb.jdbc.Driver();
+        DriverManager.registerDriver(d);
         Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
-        return conn;
+            return conn;
     }
 
     public static void main(String[] args) throws ClassNotFoundException, SQLException {

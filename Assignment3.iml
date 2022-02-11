@@ -28,18 +28,19 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/main/java/com/example/assignment3/mariadb-java-client-2.7.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/../Assignment2/Assignment2/src/main/java/com/example/assignment2/mariadb-java-client-2.7.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="PROVIDED" name="Maven: javax.enterprise:cdi-api:2.0.SP1" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: javax.el:javax.el-api:3.0.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: javax.interceptor:javax.interceptor-api:1.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: javax.inject:javax.inject:1" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: javax.ws.rs:javax.ws.rs-api:2.1.1" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: javax.servlet:javax.servlet-api:4.0.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: jakarta.enterprise:jakarta.enterprise.cdi-api:3.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: jakarta.el:jakarta.el-api:4.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: jakarta.interceptor:jakarta.interceptor-api:2.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: jakarta.annotation:jakarta.annotation-api:2.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: jakarta.inject:jakarta.inject-api:2.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: jakarta.ws.rs:jakarta.ws.rs-api:3.0.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: jakarta.servlet:jakarta.servlet-api:5.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-api:5.8.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.opentest4j:opentest4j:1.2.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.platform:junit-platform-commons:1.8.1" level="project" />
@@ -47,5 +48,14 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.jupiter:junit-jupiter-engine:5.8.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.junit.platform:junit-platform-engine:1.8.1" level="project" />
     <orderEntry type="library" name="Maven: org.mariadb.jdbc:mariadb-java-client:2.7.4" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/src/main/java/com/example/assignment3/mariadb-java-client-2.7.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
