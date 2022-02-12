@@ -2,10 +2,7 @@ package com.example.assignment3;
 
 
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
 import java.sql.*;
@@ -50,7 +47,6 @@ public class LibraryController {
             Statement stmt = conn.createStatement();
             ResultSet bookSet = stmt.executeQuery(booksQuery)) {
             while (bookSet.next()) {
-
                 Book book = new Book(bookSet.getString("isbn"), bookSet.getString("title"),
                         bookSet.getInt("editionNumber"), bookSet.getString("copyright"));
 
@@ -109,28 +105,133 @@ public class LibraryController {
             return authList;
         }catch(SQLException | ClassNotFoundException e){
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("library/book/{id}")
-    public Book oneBook(@PathParam("id") String id) throws ClassNotFoundException {
+    @Path("/book/{id}")
+    public Book oneBook(@PathParam("id") String id) throws SQLException, ClassNotFoundException {
         String query = "SELECT * from titles " +
-                "WHERE isbn = ?";
-        Book book = null;
+                        "WHERE isbn = ?";
+
         try (Connection conn = DBConnection.initDatabase()) {
             PreparedStatement ps = conn.prepareStatement(query);
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                book = new Book(rs.getString("isbn"), rs.getString("title"),
+            if (rs.next()) {
+                Book book = new Book(rs.getString("isbn"), rs.getString("title"),
                         rs.getInt("editionNumber"), rs.getString("copyright"));
+
+                String getBooks = "SELECT * FROM titles t " +
+                        "INNER JOIN authorisbn a On " +
+                        "t.isbn = a.isbn INNER JOIN authors x on " +
+                        "a.authorID = x.authorID " +
+                        "WHERE t.isbn = ?;";
+                PreparedStatement presta = conn.prepareStatement(getBooks);
+                presta.setString(1, book.getIsbn());
+                ResultSet authSet = presta.executeQuery();
+                while (authSet.next()) {
+                    Author author = new Author(authSet.getInt("authorID"), authSet.getString("firstName"),
+                            authSet.getString("lastName"));
+                    book.getAuthorList().add(author);
+                }
+                return book;
+            }else{
+                return null;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return book;
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/author/{id}")
+    public Author oneAuthor(@PathParam("id") String id) throws SQLException, ClassNotFoundException {
+        String query = "SELECT * from authors " +
+                        "WHERE authorID = ?";
+
+        try (Connection conn = DBConnection.initDatabase()) {
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Author author = new Author(rs.getInt("authorID"),
+                        rs.getString("firstName"),
+                        rs.getString("lastName"));
+
+                String getAuthors = "SELECT * FROM titles t " +
+                        "INNER JOIN authorisbn a On " +
+                        "t.isbn = a.isbn INNER JOIN authors x on " +
+                        "a.authorID = x.authorID " +
+                        "WHERE x.authorID = ?;";
+                PreparedStatement presta = conn.prepareStatement(getAuthors);
+                presta.setInt(1, author.getAuthorID());
+                ResultSet rsB = presta.executeQuery();
+                while (rsB.next()) {
+                    Book book = new Book(rsB.getString("isbn"), rsB.getString("title"),
+                            rsB.getInt("editionNumber"), rsB.getString("copyright"));
+                    author.getBookList().add(book);
+                }
+                return author;
+            }else{
+                return null;
+            }
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/addbook")
+    public String addBook(@FormParam("isbn") String isbn,
+                        @FormParam("title") String title,
+                        @FormParam("editionNumber") int editionNumber,
+                        @FormParam("copyright") String copyright) throws SQLException, ClassNotFoundException {
+        String query = "INSERT INTO titles " +
+                        "(isbn,title,editionNumber,copyright) " +
+                        "VALUES(?, ?, ?, ?);";
+
+        try(Connection conn = DBConnection.initDatabase()){
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, isbn);
+            ps.setString(2, title);
+            ps.setInt(3, editionNumber);
+            ps.setString(4, copyright);
+
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                Book book = new Book(isbn, title, editionNumber, copyright);
+                return "Your book: " + book.getTitle() + " has been successfully added to our Library!";
+            }else{
+                return null;
+            }
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/addauthor")
+    public String addAuthor(@FormParam("firstName") String firstName,
+                            @FormParam("lastName") String lastName) throws SQLException, ClassNotFoundException {
+        String query = "INSERT INTO authors" +
+                "(firstName, lastName) " +
+                "VALUES(?, ?);";
+
+        try(Connection conn = DBConnection.initDatabase()){
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, firstName);
+            ps.setString(2, lastName);
+
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                Author author = new Author(author.getAuthorID(), firstName, lastName);
+                return "Congratulations! " +
+                        "\n " + firstName + " " + lastName + " has successfully been added to our Authors list!";
+            }else{
+                return null;
+            }
+        }
     }
 }
