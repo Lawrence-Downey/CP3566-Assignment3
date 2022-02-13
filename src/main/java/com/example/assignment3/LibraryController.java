@@ -149,7 +149,7 @@ public class LibraryController {
     @Path("/author/{id}")
     public Author oneAuthor(@PathParam("id") String id) throws SQLException, ClassNotFoundException {
         String query = "SELECT * from authors " +
-                        "WHERE authorID = ?";
+                        "WHERE authorID = ?;";
 
         try (Connection conn = DBConnection.initDatabase()) {
             PreparedStatement ps = conn.prepareStatement(query);
@@ -181,13 +181,13 @@ public class LibraryController {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/addbook")
-    public String addBook(@FormParam("isbn") String isbn,
-                        @FormParam("title") String title,
-                        @FormParam("editionNumber") int editionNumber,
-                        @FormParam("copyright") String copyright) throws SQLException, ClassNotFoundException {
+    public Book addBook(@QueryParam("isbn") String isbn,
+                        @QueryParam("title") String title,
+                        @QueryParam("editionNumber") int editionNumber,
+                        @QueryParam("copyright") String copyright) throws SQLException, ClassNotFoundException {
         String query = "INSERT INTO titles " +
                         "(isbn,title,editionNumber,copyright) " +
                         "VALUES(?, ?, ?, ?);";
@@ -202,7 +202,7 @@ public class LibraryController {
             ResultSet rs = ps.executeQuery();
             if(rs.next()){
                 Book book = new Book(isbn, title, editionNumber, copyright);
-                return "Your book: " + book.getTitle() + " has been successfully added to our Library!";
+                return book;
             }else{
                 return null;
             }
@@ -210,11 +210,11 @@ public class LibraryController {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/addauthor")
-    public String addAuthor(@FormParam("firstName") String firstName,
-                            @FormParam("lastName") String lastName) throws SQLException, ClassNotFoundException {
+    public Author addAuthor(@QueryParam("firstName") String firstName,
+                            @QueryParam("lastName") String lastName) throws SQLException, ClassNotFoundException {
         String query = "INSERT INTO authors" +
                 "(firstName, lastName) " +
                 "VALUES(?, ?);";
@@ -225,13 +225,121 @@ public class LibraryController {
             ps.setString(2, lastName);
 
             ResultSet rs = ps.executeQuery();
-            if(rs.next()){
-                Author author = new Author(author.getAuthorID(), firstName, lastName);
-                return "Congratulations! " +
-                        "\n " + firstName + " " + lastName + " has successfully been added to our Authors list!";
+            if(rs.next()) {
+                String getID = "Select authorID FROM authors " +
+                        "WHERE firstName = ? AND lastName = ?;";
+                PreparedStatement presta = conn.prepareStatement(getID);
+                presta.setString(1, firstName);
+                presta.setString(2, lastName);
+                ResultSet idSet = presta.executeQuery();
+                Author author = null;
+                while (idSet.next()) {
+                    author = new Author(idSet.getInt("authorID"), firstName, lastName);
+                }
+                return author;
             }else{
                 return null;
             }
         }
     }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/associateAuthor")
+    public String associateAuthor(@QueryParam("authorID") Integer authorID,
+                                  @QueryParam("isbn") String isbn) throws SQLException, ClassNotFoundException{
+        String query = "INSERT INTO authorisbn " +
+                        "(authorID, isbn) " +
+                        "VALUES(?, ?);";
+
+        try(Connection conn = DBConnection.initDatabase()){
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setInt(1, authorID);
+            ps.setString(2, isbn);
+
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                String getAuthor = "SELECT firstName, lastName FROM authors " +
+                                    "WHERE authorID = ?;";
+
+                String getBook = "SELECT title, editionNumber, copyright FROM titles " +
+                                "WHERE isbn = ?;";
+
+                PreparedStatement psa = conn.prepareStatement(getAuthor);
+                psa.setInt(1, authorID);
+                ResultSet rsa = psa.executeQuery();
+
+                PreparedStatement psb = conn.prepareStatement(getBook);
+                psb.setString(1, isbn);
+                ResultSet rsb = psb.executeQuery();
+
+                return "Author: " + rsa.getString("firstName") + " " + rsa.getString("lastName") +
+                        " has been linked to the following book: " + rsb.getString("title") + ".";
+            }else{
+                return "Not sure why this is returning null!!!";
+            }
+        }
+    }
+
+    @DELETE
+    @Produces("text/plain")
+    @Path("/delbook/{id}")
+    public String deleteBook(@PathParam("id") String id) throws SQLException, ClassNotFoundException{
+        String query = "DELETE FROM titles " +
+                        "WHERE isbn = ?;";
+
+        try(Connection conn = DBConnection.initDatabase()){
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            return "Attempt to delete book: " + rs.getString("title") + " was successful!";
+        }
+    }
+
+    @DELETE
+    @Produces("text/plain")
+    @Path("/delauthor/{id}")
+    public String deleteAuthor(@PathParam("id") Integer id) throws SQLException, ClassNotFoundException{
+        String query = "DELETE FROM authors " +
+                "WHERE authorID = ?;";
+
+        try(Connection conn = DBConnection.initDatabase()){
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            return "Attempt to delete Author: " + rs.getString("firstName") + " " +
+                    rs.getString("lastName") + " was successful!";
+        }
+    }
+
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/modbook")
+    public Book modBook(@QueryParam("isbn") String isbn,
+                        @QueryParam("title") String title,
+                        @QueryParam("editionNumber") Integer editionNumber,
+                        @QueryParam("copyright") String copyright) throws SQLException, ClassNotFoundException {
+
+        String query1 = "UPDATE titles " +
+                        "SET title = ? " +
+                        "WHERE isbn = ?;";
+        String query2 = "UPDATE titles " +
+                        "SET editionNumber = ? " +
+                        "WHERE isbn = ?;";
+        String query3 = "UPDATE titles " +
+                        "SET copyright = ? " +
+                        "WHERE isbn = ?;";
+
+        //Use if statements to determine if a field was entered. If so, call query.
+
+        //Remove this after!
+        return null;
+    }
+
+
+
+
 }
