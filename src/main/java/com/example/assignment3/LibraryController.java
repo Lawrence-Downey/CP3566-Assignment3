@@ -244,10 +244,10 @@ public class LibraryController {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/associateAuthor")
-    public String associateAuthor(@QueryParam("authorID") Integer authorID,
+    public Author associateAuthor(@QueryParam("authorID") Integer authorID,
                                   @QueryParam("isbn") String isbn) throws SQLException, ClassNotFoundException{
         String query = "INSERT INTO authorisbn " +
                         "(authorID, isbn) " +
@@ -259,12 +259,12 @@ public class LibraryController {
             ps.setString(2, isbn);
 
             ResultSet rs = ps.executeQuery();
-            if(rs.next()){
+            if(rs.next()) {
                 String getAuthor = "SELECT firstName, lastName FROM authors " +
-                                    "WHERE authorID = ?;";
+                        "WHERE authorID = ?;";
 
                 String getBook = "SELECT title, editionNumber, copyright FROM titles " +
-                                "WHERE isbn = ?;";
+                        "WHERE isbn = ?;";
 
                 PreparedStatement psa = conn.prepareStatement(getAuthor);
                 psa.setInt(1, authorID);
@@ -273,11 +273,6 @@ public class LibraryController {
                 PreparedStatement psb = conn.prepareStatement(getBook);
                 psb.setString(1, isbn);
                 ResultSet rsb = psb.executeQuery();
-
-                return "Author: " + rsa.getString("firstName") + " " + rsa.getString("lastName") +
-                        " has been linked to the following book: " + rsb.getString("title") + ".";
-            }else{
-                return "Not sure why this is returning null!!!";
             }
         }
     }
@@ -333,13 +328,72 @@ public class LibraryController {
                         "SET copyright = ? " +
                         "WHERE isbn = ?;";
 
-        //Use if statements to determine if a field was entered. If so, call query.
+        try(Connection conn = DBConnection.initDatabase()) {
 
-        //Remove this after!
-        return null;
+            if (isbn != null) {
+                if(title != null) {
+                    PreparedStatement ps1 = conn.prepareStatement((query1));
+                    ps1.setString(1, title);
+                    ps1.setString(2, isbn);
+                    ps1.executeUpdate();
+                }
+                if(editionNumber != null) {
+                    PreparedStatement ps2 = conn.prepareStatement((query2));
+                    ps2.setInt(1, editionNumber);
+                    ps2.setString(2, isbn);
+                    ps2.executeUpdate();
+                }
+                if(copyright != null) {
+                    PreparedStatement ps3 = conn.prepareStatement((query3));
+                    ps3.setString(1, copyright);
+                    ps3.setString(2, isbn);
+                    ps3.executeUpdate();
+                }
+                //If partnered with a form, these fields must be filled in with either
+                //new information or existing information.
+                return new Book(isbn, title, editionNumber, copyright);
+            }else{
+                return null;
+            }
+        }
     }
 
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/modauthor")
+    public Author modAuthor(@QueryParam("authorID") Integer authorID,
+                            @QueryParam("firstName") String firstName,
+                            @QueryParam("lastName") String lastName) throws SQLException, ClassNotFoundException {
 
+        String query1 = "UPDATE authors " +
+                "SET firstName = ? " +
+                "WHERE authorID = ?;";
+        String query2 = "UPDATE authors " +
+                "SET lastName = ? " +
+                "WHERE authorID = ?;";
 
+        try(Connection conn = DBConnection.initDatabase()) {
 
+            if (authorID != null) {
+                if(firstName != null) {
+                    PreparedStatement ps1 = conn.prepareStatement((query1));
+                    ps1.setString(1, firstName);
+                    ps1.setInt(2, authorID);
+                    ps1.executeUpdate();
+                }
+                if(lastName != null) {
+                    PreparedStatement ps2 = conn.prepareStatement((query2));
+                    ps2.setString(1, lastName);
+                    ps2.setInt(2, authorID);
+                    ps2.executeUpdate();
+                }
+
+                //If partnered with a form, these fields must be filled in with either
+                //new information or existing information.
+                return new Author(authorID, firstName, lastName);
+            }else{
+                return null;
+            }
+        }
+    }
 }
